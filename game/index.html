@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SOLMARA HEAT — open-world crime</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#1a0f14;font-family:system-ui,Segoe UI,sans-serif}
+#game{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#hud{position:fixed;inset:0;pointer-events:none;color:#fff;text-shadow:0 1px 3px #000;display:none}
+#hud.on{display:block}
+.pill{background:rgba(10,8,14,.62);border:1px solid rgba(255,255,255,.22);border-radius:8px;padding:6px 10px}
+#cash{position:absolute;top:12px;left:12px;font-size:20px;font-weight:700}
+#cash small{font-size:12px;color:#ffd34d}
+#bars{position:absolute;top:52px;left:12px;width:210px}
+.bar{height:10px;border-radius:5px;background:rgba(0,0,0,.55);margin-top:4px;overflow:hidden;border:1px solid rgba(255,255,255,.25)}
+.bar>i{display:block;height:100%}
+#hp>i{background:#4ade80}#ar>i{background:#60a5fa}
+#stars{position:absolute;top:12px;right:12px;font-size:26px;letter-spacing:3px;color:#ffd34d}
+#stars .off{color:rgba(255,255,255,.28)}
+#obj{position:absolute;top:52px;left:50%;transform:translateX(-50%);max-width:56%;text-align:center;font-size:15px}
+#obj b{color:#ffd34d}
+#msg{position:absolute;top:104px;left:50%;transform:translateX(-50%);font-size:14px;color:#ffe9a8;text-align:center}
+#wpn{position:absolute;right:12px;bottom:12px;font-size:17px;text-align:right}
+#speed{position:absolute;left:12px;bottom:12px;font-size:26px;font-weight:700}
+#map{position:absolute;right:12px;bottom:64px;width:190px;height:190px;border-radius:50%;border:2px solid rgba(255,255,255,.5);background:rgba(8,10,16,.72)}
+#xhair{position:absolute;left:50%;top:50%;width:22px;height:22px;margin:-11px 0 0 -11px;display:none}
+#xhair:before,#xhair:after{content:"";position:absolute;background:#fff;box-shadow:0 0 3px #000}
+#xhair:before{left:10px;top:0;width:2px;height:22px}#xhair:after{top:10px;left:0;width:22px;height:2px}
+#xhair.on{display:block}
+#hint{position:absolute;left:50%;bottom:96px;transform:translateX(-50%);font-size:14px;color:#fff}
+.screen{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 30%,rgba(255,110,60,.28),rgba(8,4,10,.88) 70%);color:#fff;text-align:center;z-index:5}
+.screen.on{display:flex}
+.card{max-width:640px;padding:28px}
+h1{font-size:56px;margin:0;letter-spacing:4px;color:#ffcf3d;text-shadow:0 3px 0 #c2410c,0 6px 18px #000}
+h1 span{color:#ff6b4a}
+h2{font-size:30px;margin:0 0 10px;color:#ffcf3d}
+p{line-height:1.5;color:#e8e2d8}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;text-align:left;font-size:14px;margin:14px auto;max-width:480px}
+.keys b{color:#ffd34d;text-align:right}
+.btn{display:inline-block;margin-top:14px;padding:10px 26px;border-radius:8px;background:#ffcf3d;color:#231303;font-weight:800;font-size:17px;cursor:pointer}
+.btn.ghost{background:transparent;color:#fff;border:1px solid #fff}
+#status{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+#toast{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);background:rgba(10,8,14,.8);border:1px solid #ffd34d;color:#ffe9a8;padding:8px 16px;border-radius:8px;font-size:15px;display:none;z-index:6}
+</style>
+<script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
+</head>
+<body>
+<canvas id="game" aria-label="SOLMARA HEAT: an open-world crime game in the coastal city of Solmara"></canvas>
+<div id="hud">
+  <div id="cash" class="pill">$0 <small>SOLMARA</small></div>
+  <div id="bars"><div class="bar" id="hp"><i style="width:100%"></i></div><div class="bar" id="ar"><i style="width:0%"></i></div></div>
+  <div id="stars" class="pill"></div>
+  <div id="obj" class="pill"></div>
+  <div id="msg"></div>
+  <div id="wpn" class="pill"></div>
+  <div id="speed" class="pill">0</div>
+  <canvas id="map" width="190" height="190"></canvas>
+  <div id="xhair"></div>
+  <div id="hint"></div>
+</div>
+<div id="toast"></div>
+<div class="screen on" id="scr-title"><div class="card">
+  <h1>SOLMARA<br><span>HEAT</span></h1>
+  <p>Sun-soaked coastal crime. You are <b>Rook Calloway</b>, a wheelman with nothing left to lose. Your fixer <b>Vera Quinn</b> has nine jobs lined up — and the <b>Gulls</b> crew, run by Silas Crowe, owns every street you need. Steal, drive, shoot, outrun the law, and take the city back, one job at a time.</p>
+  <p>9 story jobs &middot; 4 districts &middot; 5-star police with roadblocks &amp; helicopter &middot; garage upgrades &middot; 10 sun medallions</p>
+  <div class="btn" id="btn-play">START ENGINE</div><br>
+  <div class="btn ghost" id="btn-how">HOW TO PLAY</div>
+  <div class="btn ghost" id="btn-set">SETTINGS</div>
+</div></div>
+<div class="screen" id="scr-how"><div class="card"><h2>HOW TO PLAY</h2>
+  <div class="keys"><b>W A S D</b><span>Move / drive &middot; Shift to sprint</span><b>Mouse</b><span>Drag to look &middot; wheel to zoom</span><b>E</b><span>Enter / exit car &middot; use marker</span><b>Click</b><span>Shoot (hold right mouse to aim)</span><b>1 2 3 / Q</b><span>Switch weapon</span><b>R</b><span>Reload</span><b>Space</b><span>Handbrake</span><b>C</b><span>Career &amp; upgrades</span><b>P / Esc</b><span>Pause</span><b>M</b><span>Mute</span></div>
+  <p>Follow the gold <b>V</b> marker to Vera's next job. Earn cash, buy garage upgrades and weapons, raise district reputation to unlock later jobs. Lose the cops by breaking line of sight — or get busted.</p>
+  <div class="btn" id="btn-how-back">BACK</div>
+</div></div>
+<div class="screen" id="scr-set"><div class="card"><h2>SETTINGS</h2>
+  <p>Volume <input type="range" id="set-vol" min="0" max="100" value="70"> <span id="set-vol-v">70</span></p>
+  <p>Mouse sensitivity <input type="range" id="set-sen" min="20" max="200" value="100"> <span id="set-sen-v">100</span></p>
+  <p>Quality <select id="set-q"><option value="high">High</option><option value="low">Low (faster)</option></select></p>
+  <div class="btn" id="btn-set-back">BACK</div>
+</div></div>
+<div class="screen" id="scr-pause"><div class="card"><h2>PAUSED</h2><p>Solmara waits. The Gulls don't.</p><div class="btn" id="btn-resume">RESUME</div><br><div class="btn ghost" id="btn-quit">QUIT TO TITLE</div></div></div>
+<div class="screen" id="scr-over"><div class="card"><h2 id="over-title">BUSTED</h2><p id="over-text"></p><div class="btn" id="btn-again">TRY AGAIN</div></div></div>
+<div class="screen" id="scr-mission"><div class="card"><h2 id="mis-title">JOB COMPLETE</h2><p id="mis-text"></p><div class="btn" id="btn-mis-ok">CONTINUE</div></div></div>
+<div class="screen" id="scr-career"><div class="card"><h2>CAREER — ROOK CALLOWAY</h2><p id="career-text"></p><div class="keys" id="career-shop"></div><div class="btn" id="btn-career-ok">CLOSE</div></div></div>
+<p id="status" role="status" aria-live="polite"></p>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
